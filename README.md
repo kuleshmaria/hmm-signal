@@ -1,0 +1,1 @@
+Implementation of the Baum-Welch algorithm in C
