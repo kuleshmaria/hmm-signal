@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "baum_welch.h"
 #include "hmm.h"
 #include "utils.h"
@@ -127,7 +128,20 @@ static void update_hmm_parameters(hmm_t* hmm, double** gammas, double*** xi, int
     }
 }
 
-void baum_welch(hmm_t* hmm, int* seq, int n_seq, int n_iterations)
+double log_likelihood(double* alpha_scaling, int n)
+{
+    int i;
+    double log_likelihood;
+
+    log_likelihood = 0;
+    for(i = 0; i < n; i++)
+    {
+        log_likelihood += log(alpha_scaling[i]);
+    }
+    return log_likelihood;
+}
+
+void baum_welch(hmm_t* hmm, int* seq, int n_seq, int n_iterations, double eps)
 {
     double** alphas;
     double** betas;
@@ -135,14 +149,26 @@ void baum_welch(hmm_t* hmm, int* seq, int n_seq, int n_iterations)
     double** gammas;
     double*** xi;
     int k;
+    double old_log_likelihood;
+    double new_log_likelihood;
 
     init_baum_welch(hmm, &alphas, &betas, &scaling, &gammas, &xi, n_seq);
+    old_log_likelihood = -INFINITY;
 
     for(k = 0; k < n_iterations; k++)
     {
         // forward-backward
         forward(alphas, scaling, hmm, seq, n_seq);
         backward(betas, scaling, hmm, seq, n_seq);
+
+        new_log_likelihood = log_likelihood(scaling, n_seq);
+        printf("Iteration %i: log-likelihood %f\n", (k+1), new_log_likelihood);
+
+        if(fabs(old_log_likelihood - new_log_likelihood) < eps)
+        {
+            break;
+        }
+        old_log_likelihood = new_log_likelihood;
 
         // gamma - probability of being in state i at time t
         compute_gammas(gammas, hmm, alphas, betas, n_seq);
@@ -156,3 +182,4 @@ void baum_welch(hmm_t* hmm, int* seq, int n_seq, int n_iterations)
     // free
     free_baum_welch(hmm, alphas, betas, scaling, gammas, xi);
 }
+

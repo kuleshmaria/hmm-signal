@@ -22,7 +22,7 @@ int main()
 
     init(&hmm);
 
-    baum_welch(hmm, seq, n_seq, 1);
+    baum_welch(hmm, seq, n_seq, 5, 1e-2);
 
     // free
     free_hmm(hmm);

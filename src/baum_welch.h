@@ -3,6 +3,7 @@
 
 #include "hmm.h"
 
-void baum_welch(hmm_t*, int*, int, int);
+void baum_welch(hmm_t*, int*, int, int, double);
+double log_likelihood(double*, int);
 
 #endif
